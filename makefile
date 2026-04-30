@@ -5,7 +5,7 @@ mcu: setup
 	cd mcu
 	make mcu
 
-install: mcu
+install: setup
 	cd mcu
 	make install
 
