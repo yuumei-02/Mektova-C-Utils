@@ -46,52 +46,56 @@ void* Array_get(Array* self, usize index);
 #define HashEntry(T) HashEntry_##T
 #define HashMap(T)   HashMap_##T
 
-#define HashMap_new(T)    HashMap_##T##_new
-#define HashMap_free(T)   HashMap_##T##_free
-#define HashMap_hash(T)   HashMap_##T##_hash
-#define HashMap_put(T)    HashMap_##T##_put
-#define HashMap_get(T)    HashMap_##T##_get
-#define HashMap_delete(T) HashMap_##T##_delete
-#define HashMap_resize(T) HashMap_##T##_resize
+#define HashMap_new(T)     HashMap_##T##_new
+#define HashMap_free(T)    HashMap_##T##_free
+#define HashMap_hash(T)    HashMap_##T##_hash
+#define HashMap_put(T)     HashMap_##T##_put
+#define HashMap_get(T)     HashMap_##T##_get
+#define HashMap_delete(T)  HashMap_##T##_delete
+#define HashMap_resize(T)  HashMap_##T##_resize
+#define HashMap_foreach(T) HashMap_##T##_foreach
 
 #define HashMap_hdr(T) \
-   typedef struct HashEntry_##T {                                                \
-      struct HashEntry_##T* next;                                                \
-      cstr key;                                                                  \
-      T value;                                                                   \
-   } HashEntry_##T;                                                              \
-                                                                                 \
-   typedef struct {                                                              \
-      HashEntry_##T** entries;                                                   \
-      usize length;                                                              \
-      usize capacity;                                                            \
-   } HashMap_##T;                                                                \
-                                                                                 \
-   HashMap_##T HashMap_##T##_new();                                              \
-   void HashMap_##T##_free(HashMap_##T* self);                                   \
-                                                                                 \
-   /* [self] can't be null. */                                                   \
-   /* [str] can't be null. */                                                    \
-   /* Returns the value's hash index. */                                         \
-   usize HashMap_##T##_hash(HashMap_##T* self, cstr str);                        \
-                                                                                 \
-   /* [self] can't be null. */                                                   \
-   /* [key] can't be null. */                                                    \
-   /* Returns [false] on update and [true] on [insert]. */                       \
-   /* [key] gets copied when inserting a new entry. */                           \
-   bool HashMap_##T##_put(HashMap_##T* self, cstr key, T value);                 \
-                                                                                 \
-   /* [self] can't be null. */                                                   \
-   /* [key] can't be null. */                                                    \
-   /* Returns a pointer to the [key]'s [value]. */                               \
-   /* Returns [null] when the key doesn't exist. */                              \
-   T* HashMap_##T##_get(HashMap_##T* self, cstr key);                            \
-                                                                                 \
-   /* [self] can't be null. */                                                   \
-   /* [key] can't be null. */                                                    \
-   /* Returns a [bool] where [false] is [deletion] and [true] is [not found]. */ \
-   bool HashMap_##T##_delete(HashMap_##T* self, cstr key);                       \
-   void HashMap_##T##_resize(HashMap_##T* self, usize new_capacity);             \
+   typedef struct HashEntry_##T {                                                      \
+      struct HashEntry_##T* next;                                                      \
+      cstr key;                                                                        \
+      T value;                                                                         \
+   } HashEntry_##T;                                                                    \
+                                                                                       \
+   typedef struct {                                                                    \
+      HashEntry_##T** entries;                                                         \
+      usize length;                                                                    \
+      usize capacity;                                                                  \
+   } HashMap_##T;                                                                      \
+                                                                                       \
+   HashMap_##T HashMap_##T##_new();                                                    \
+   void HashMap_##T##_free(HashMap_##T* self);                                         \
+                                                                                       \
+   /* [self] can't be null. */                                                         \
+   /* [str] can't be null. */                                                          \
+   /* Returns the value's hash index. */                                               \
+   usize HashMap_##T##_hash(HashMap_##T* self, cstr str);                              \
+                                                                                       \
+   /* [self] can't be null. */                                                         \
+   /* [key] can't be null. */                                                          \
+   /* Returns [false] on update and [true] on [insert]. */                             \
+   /* [key] gets copied when inserting a new entry. */                                 \
+   bool HashMap_##T##_put(HashMap_##T* self, cstr key, T value);                       \
+                                                                                       \
+   /* [self] can't be null. */                                                         \
+   /* [key] can't be null. */                                                          \
+   /* Returns a pointer to the [key]'s [value]. */                                     \
+   /* Returns [null] when the key doesn't exist. */                                    \
+   T* HashMap_##T##_get(HashMap_##T* self, cstr key);                                  \
+                                                                                       \
+   typedef void (*HashMap_##T##_ForeachFn)(cstr key, T* value, nullable void* opt);    \
+   void HashMap_##T##_foreach(HashMap_##T* self, HashMap_##T##_ForeachFn on_pair, void* opt); \
+                                                                                       \
+   /* [self] can't be null. */                                                         \
+   /* [key] can't be null. */                                                          \
+   /* Returns a [bool] where [false] is [deletion] and [true] is [not found]. */       \
+   bool HashMap_##T##_delete(HashMap_##T* self, cstr key);                             \
+   void HashMap_##T##_resize(HashMap_##T* self, usize new_capacity);                   \
 
 #define HashMap_impl(T) \
    HashMap_##T HashMap_##T##_new() {                                        \
@@ -177,6 +181,19 @@ void* Array_get(Array* self, usize index);
       }                                                                     \
                                                                             \
       return nullptr;                                                       \
+   }                                                                        \
+                                                                            \
+   void HashMap_##T##_foreach(HashMap_##T* self, HashMap_##T##_ForeachFn on_pair, nullable void* opt) { \
+      mcu_assert(self != nullptr, "self can't be null");                    \
+      mcu_assert(on_pair != nullptr, "on_pair can't be null");              \
+                                                                            \
+      for (usize i = 0; i < self->capacity; ++i) {                          \
+         HashEntry_##T* curr = self->entries[i];                            \
+         while (curr) {                                                     \
+            on_pair(curr->key, &curr->value, opt);                          \
+            curr = curr->next;                                              \
+         }                                                                  \
+      }                                                                     \
    }                                                                        \
                                                                             \
    bool HashMap_##T##_delete(HashMap_##T* self, cstr key) {                 \
