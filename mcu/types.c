@@ -221,6 +221,26 @@ void String_appendf(String* self, cstr format, ...) {
    va_end(args);
 }
 
+void String_appendfv(String* self, const cstr format, va_list args) {
+   mcu_assert(self != nullptr, "Can't append to null");
+   mcu_assert(format != nullptr, "Can't append a format of null to String");
+
+   cstr tmp_str = nullptr;
+   vasprintf(&tmp_str, format, args);
+   usize other_length = strlen(tmp_str);
+
+   while (self->length + other_length >= self->capacity) {
+      self->capacity *= 2;
+      self->chars = mcu_realloc(self->chars, self->capacity + 1);
+   }
+
+   memmove(self->chars + self->length, tmp_str, other_length);
+   self->length += other_length;
+   self->chars[self->length] = '\0';
+
+   free(tmp_str);
+}
+
 void String_append_String(String* self, String* other) {
    mcu_assert(self != nullptr, "Can't append to null");
    mcu_assert(other != nullptr, "Can't append null to a String");

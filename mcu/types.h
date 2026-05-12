@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 
 #define cstr char*
 #define null 0
@@ -124,6 +125,8 @@ void String_append_cstr(String* self, cstr other);
 /// [other] may not be null.
 /// The memory region of [self] and [other] may overlap.
 void String_appendf(String* self, cstr format, ...);
+
+void String_appendfv(String* self, const cstr format, va_list args);
 
 /// Appends String [other] to String [self] through a [copy] operation.
 /// [Panics] on reallocation failure.
