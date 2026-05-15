@@ -39,6 +39,11 @@ Vector Vector_dummy() {
    };
 }
 
+void Vector_clear(Vector* self) {
+   mcu_assert(self != nullptr, "self can't be null");
+   self->length = 0;
+}
+
 void Vector_push(Vector* self, void* data) {
    mcu_assert(self != nullptr, "Can't push to null");
    mcu_assert(data != nullptr, "Address of data can't be null");
