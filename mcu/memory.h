@@ -19,18 +19,3 @@ void* mcu_realloc(void* ptr, usize new_byte_size);
 /// [ptr] is allowed to be [null].
 void mcu_free(void* ptr);
 
-typedef struct Arena {
-   void* buffer;
-   usize length;
-   usize capacity;
-} Arena;
-
-// Todo: Documentation
-// Todo: Verify implementation
-Arena Arena_new(usize bytes);
-void Arena_clear(Arena* self);
-void Arena_destroy(Arena* self);
-
-void* Arena_alloc(Arena* self, usize bytes);
-void Arena_pop(Arena* self, usize bytes);
-

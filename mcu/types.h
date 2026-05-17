@@ -8,6 +8,7 @@
 #define cstr char*
 #define null 0
 #define nullable
+#define out
 
 typedef uint64_t u64;
 typedef uint32_t u32;
