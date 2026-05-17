@@ -1,6 +1,8 @@
 #include "core.h"
 #include "memory.h"
 
+#include <sys/mman.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,52 +37,75 @@ void mcu_free(void* ptr) {
    free(ptr);
 }
 
-Arena Arena_new(usize byte_capacity) {
-   mcu_assert(byte_capacity > 0, "Can't allocate an arena of size 0");
+Arena Arena_new_ex(usize capacity, ArenaSettings settings) {
+   Arena self;
+   self.length = 0;
+   self.capacity = capacity;
 
-   return (Arena) {
-      .buffer = mcu_malloc(byte_capacity),
-      .length = 0,
-      .capacity = byte_capacity
-   };
+   i32 prot = 0;
+   if (settings.protection & MP_None) {
+      prot = PROT_NONE;
+   } else {
+      prot = settings.protection & MP_Exec  ? prot | PROT_EXEC  : prot;
+      prot = settings.protection & MP_Read  ? prot | PROT_READ  : prot;
+      prot = settings.protection & MP_Write ? prot | PROT_WRITE : prot;
+   }
+   
+   self.buffer = mmap(nullptr, capacity, prot, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+   if (self.buffer == MAP_FAILED) {
+      panic("[!] Failed to allocate memory for arena of size \"%zu\", reason: \"%s\"", capacity, strerror(errno));
+   }
+   
+   return self;
 }
 
-void Arena_clear(Arena* self) {
-   mcu_assert(self != nullptr, "self can't be null");
+void Arena_destroy(nullable Arena* self) {
+   if (self == nullptr) return;
 
-   self->length = 0;
-}
-
-void Arena_destroy(Arena* self) {
-   mcu_assert(self != nullptr, "self can't be null")
-
-   mcu_free(self->buffer);
-   self->buffer = nullptr;
-   self->length = 0;
-   self->capacity = 0;
+   munmap(self->buffer, self->capacity);
+   *self = (Arena) {0};
 }
 
 void* Arena_alloc(Arena* self, usize bytes) {
    mcu_assert(self != nullptr, "self can't be null");
-   mcu_assert(bytes > 0, "Can't allocate 0 or less bytes");
-   mcu_assert(bytes <= self->capacity, "Can't allocate more bytes than the capacity of self");
 
-   if (bytes >= self->capacity - self->length) {
+   if (bytes > (self->capacity - self->length)) {
+      panic("Allocation from arena failed with OOM");
+   }
+
+   void* data = self->buffer + self->length;
+   self->length += bytes;
+
+   return data;
+}
+
+/// Same as [Arena_alloc] except that this version returns [null] on allocation failure.
+void* Arena_alloc_non_panic(Arena* self, usize bytes) {
+   mcu_assert(self != nullptr, "self can't be null");
+
+   if (bytes > (self->capacity - self->length)) {
       return nullptr;
    }
 
-   void* ptr = ((u8*) self->buffer) + self->length;
+   void* data = self->buffer + self->length;
    self->length += bytes;
-
-   return ptr;
+   
+   return data;
 }
 
-void Arena_pop(Arena* self, usize bytes) {
-   mcu_assert(self != nullptr, "self can't be null");
-   mcu_assert(bytes <= self->capacity, "Can't pop more bytes than self's byte capacity");
+/// [bytes] is allowed to be more than the [arena's length].
+void Arena_free(nullable Arena* self, usize bytes) {
+   if (self == nullptr) return;
 
-   self->length -= bytes > self->length
-      ? self->length
-      : bytes; 
+   if (self->length < bytes) {
+      self->length = 0;
+   } else {
+      self->length -= bytes;
+   }
+}
+
+void Arena_clear(nullable Arena* self) {
+   if (self == nullptr) return;
+   self->length = 0;
 }
 
