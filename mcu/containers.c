@@ -31,16 +31,11 @@ Vector Vector_with_capacity(usize byte_size_of_T, usize el_capacity) {
 }
 
 Vector Vector_dummy() {
-   return (Vector) {
-      .buffer = nullptr,
-      .length = 0,
-      .capacity = 0,
-      .T_size = 0
-   };
+   return (Vector) {0};
 }
 
-void Vector_clear(Vector* self) {
-   mcu_assert(self != nullptr, "self can't be null");
+void Vector_clear(nullable Vector* self) {
+   if (self == nullptr) return;
    self->length = 0;
 }
 
@@ -113,14 +108,11 @@ void Vector_remove(Vector* self, usize index) {
    }
 }
 
-void Vector_free(Vector* self) {
-   mcu_assert(self != nullptr, "Can't free a null Vector");
+void Vector_free(nullable Vector* self) {
+   if (self == nullptr) return;
 
    mcu_free(self->buffer);
-   self->buffer = nullptr;
-   self->length = 0;
-   self->capacity = 0;
-   self->T_size = 0;
+   *self = (Vector) {0};
 }
 
 Array Array_new(usize length, usize T_size) {

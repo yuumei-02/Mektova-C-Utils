@@ -86,7 +86,7 @@ static inline String String_dummy() { return (String) {0}; }
 /// Creates a new [heap] allocated [String] from a [cstr].
 /// [Panics] on allocation failure.
 /// [str] may be null.
-String String_from(cstr str);
+String String_from(const cstr str);
 
 /// Deep copies [original].
 /// [panics] on allocation failure.
@@ -94,46 +94,41 @@ String String_from(cstr str);
 String String_clone(String original);
 
 /// Frees a [String's heap allocation] from memory.
-/// [self] may be null.
-void String_free(String* self);
+void String_free(nullable String* self);
 
-/// Clears a [String], preserving its [length]
-/// [self] may be null.
-void String_clear(String* self);
+/// Clears a [String], preserving its [length].
+void String_clear(nullable String* self);
 
 /// Appends char [c] to a [String].
 /// [Panics] on reallocation failure.
-/// [self] may be null.
 void String_append(String* self, char c);
 
 /// Appends char [c] to the back of a [String].
 /// [Panics] on reallocation failure.
-/// [self] may be null.
 void String_append_back(String* self, char c);
 
-void String_pop(String* self);
+/// Pops the char at the top of the string and returns it.
+/// The returning char may be a [null byte]
+/// when there is nothing left to pop or when [self] is [null].
+char String_pop(nullable String* self);
 
 /// Appends cstr [other] to String [self] through a [copy] operation.
 /// [Panics] on reallocation failure.
-/// [self] may not be null.
-/// [other] may not be null.
 /// The memory region of [self] and [other] may overlap.
-void String_append_cstr(String* self, cstr other);
+void String_append_cstr(String* self, nullable cstr other);
 
 /// Appends cstr [other] to String [self] through a [copy] operation.
 /// [Panics] on reallocation failure.
-/// [self] may not be null.
-/// [other] may not be null.
 /// The memory region of [self] and [other] may overlap.
-void String_appendf(String* self, cstr format, ...);
+void String_appendf(String* self, const cstr format, ...);
 
+/// Same as [String_appendf] except that this version takes in the
+/// va_list instead of creating it itself.
 void String_appendfv(String* self, const cstr format, va_list args);
 
 /// Appends String [other] to String [self] through a [copy] operation.
 /// [Panics] on reallocation failure.
-/// [self] may be null.
-/// [other] may be null.
 /// The memory region of both Strings may overlap.
 /// e.g by appending a String to itself
-void String_append_String(String* self, String* other);
+void String_append_String(String* self, nullable String* other);
 

@@ -12,8 +12,8 @@ typedef struct Vector {
 Vector Vector_new(usize byte_size_of_T);
 Vector Vector_with_capacity(usize byte_size_of_T, usize el_capacity);
 Vector Vector_dummy();
-void Vector_free(Vector* self);
-void Vector_clear(Vector* self);
+void Vector_free(nullable Vector* self);
+void Vector_clear(nullable Vector* self);
 
 void Vector_push(Vector* self, void* data);
 void* Vector_pop(Vector* self);

@@ -88,7 +88,7 @@ String String_with_capacity(usize capacity) {
    return string;
 }
 
-String String_from(cstr str) {
+String String_from(const cstr str) {
    mcu_assert(str != nullptr, "Can't create a String from null");
 
    usize str_length = strlen(str);
@@ -117,17 +117,16 @@ String String_clone(String original) {
    return self;
 }
 
-void String_free(String* self) {
-   mcu_assert(self != nullptr, "Cannot free null");
+void String_free(nullable String* self) {
+   if (self == nullptr) return;
 
    mcu_free(self->chars);
-   self->chars = nullptr;
-   self->length = 0;
-   self->capacity = 0;
+   *self = (String) {0};
 }
 
-void String_clear(String* self) {
-   mcu_assert(self != nullptr, "Cannot reset null");
+void String_clear(nullable String* self) {
+   if (self == nullptr) return;
+
    self->length = 0;
    self->chars[0] = '\0';
 }
@@ -164,12 +163,9 @@ void String_append_back(String* self, char c) {
    return;
 }
 
-void String_pop(String* self) {
-   mcu_assert(self != nullptr, "Can't pop from null");
-
-   if (self->length == 0) {
-      return;
-   }
+char String_pop(nullable String* self) {
+   if (self == nullptr)   return '\0';
+   if (self->length == 0) return '\0';
 
    if (self->length >= self->capacity / 2 && self->capacity > 16) {
       self->capacity /= 2;
@@ -177,12 +173,16 @@ void String_pop(String* self) {
    }
 
    self->length -= 1;
+   char c = self->chars[self->length];
    self->chars[self->length] = '\0';
+
+   return c;
 }
 
-void String_append_cstr(String* self, cstr other) {
+void String_append_cstr(String* self, nullable cstr other) {
    mcu_assert(self != nullptr, "Can't append to null");
-   mcu_assert(other != nullptr, "Can't append null to a [String]");
+
+   if (other == nullptr) return;
 
    usize other_length = strlen(other);
 
@@ -196,7 +196,7 @@ void String_append_cstr(String* self, cstr other) {
    self->chars[self->length] = '\0';
 }
 
-void String_appendf(String* self, cstr format, ...) {
+void String_appendf(String* self, const cstr format, ...) {
    mcu_assert(self != nullptr, "Can't append to null");
    mcu_assert(format != nullptr, "Can't append a format of null to String");
 
@@ -241,9 +241,10 @@ void String_appendfv(String* self, const cstr format, va_list args) {
    free(tmp_str);
 }
 
-void String_append_String(String* self, String* other) {
+void String_append_String(String* self, nullable String* other) {
    mcu_assert(self != nullptr, "Can't append to null");
-   mcu_assert(other != nullptr, "Can't append null to a String");
+
+   if (other == nullptr) return;
 
    while (self->length + other->length >= self->capacity) {
       self->capacity *= 2;
