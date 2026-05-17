@@ -39,6 +39,7 @@ typedef struct {
 #define Arena_new(capacity, ...) \
    Arena_new_ex(capacity, (ArenaSettings) { \
       .protection = MP_Read | MP_Write \
+      __VA_OPT__(,) __VA_ARGS__ \
    })
 
 Arena Arena_new_ex(usize capacity, ArenaSettings settings);
