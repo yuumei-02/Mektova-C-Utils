@@ -109,15 +109,6 @@ void Arena_clear(nullable Arena* self) {
    self->length = 0;
 }
 
-typedef struct {
-   void* items;
-   bool* free_list;
-   usize item_size;
-   usize capacity;
-} SlotAllocator;
-
-/// [item_capacity] must be greater than [0]
-/// [item_size] must be greater than [0]
 SlotAllocator SlotAllocator_new(usize item_capacity, usize item_size) {
    mcu_assert(item_capacity > 0, "item_capacity must be greater than 0");
    mcu_assert(item_size > 0, "item_size must be greater than 0");
@@ -159,7 +150,7 @@ void* SlotAllocator_alloc(SlotAllocator* self) {
 }
 
 void* SlotAllocator_alloc_no_panic(nullable SlotAllocator* self) {
-   if (self == nullptr) return;
+   if (self == nullptr) return nullptr;
 
    for (usize i = 0; i < self->capacity; ++i) {
       if (self->free_list[i] == false) {
@@ -169,5 +160,17 @@ void* SlotAllocator_alloc_no_panic(nullable SlotAllocator* self) {
    }
 
    return nullptr;
+}
+
+// @todo: Doesn't actually find the index and thus does not free the memory
+void SlotAllocator_free(nullable SlotAllocator* self, nullable void* ptr) {
+   if (self == nullptr) return;
+   if (ptr == nullptr) return;
+   if (ptr < self->items) return;
+
+   usize index = (u8*) ptr - (u8*) self->items;
+
+   if (index >= self->capacity) return;
+   self->free_list[index] = false;
 }
 
