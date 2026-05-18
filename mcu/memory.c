@@ -162,15 +162,16 @@ void* SlotAllocator_alloc_no_panic(nullable SlotAllocator* self) {
    return nullptr;
 }
 
-// @todo: Doesn't actually find the index and thus does not free the memory
 void SlotAllocator_free(nullable SlotAllocator* self, nullable void* ptr) {
-   if (self == nullptr) return;
-   if (ptr == nullptr) return;
+   if (self == nullptr)   return;
+   if (ptr == nullptr)    return;
    if (ptr < self->items) return;
 
-   usize index = (u8*) ptr - (u8*) self->items;
-
-   if (index >= self->capacity) return;
+   isize index = (u8*) ptr - (u8*) self->items;
+   if (index < 0) return;
+   index /= self->item_size;
+   if (index >= (isize) self->capacity) return;
+   
    self->free_list[index] = false;
 }
 
