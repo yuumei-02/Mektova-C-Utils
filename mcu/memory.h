@@ -26,7 +26,7 @@ typedef enum : i32 {
    MP_None  = 0,
 } MemoryProtection;
 
-typedef struct {
+typedef struct Arena {
    u8* buffer;
    usize length;
    usize capacity;
@@ -43,7 +43,7 @@ typedef struct {
    })
 
 Arena Arena_new_ex(usize capacity, ArenaSettings settings);
-void Arena_destroy(nullable Arena* self);
+void Arena_delete(nullable Arena* self);
 
 void* Arena_alloc(Arena* self, usize bytes);
 /// Same as [Arena_alloc] except that this version returns [null] on allocation failure.

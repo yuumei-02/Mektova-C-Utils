@@ -75,60 +75,84 @@ void Str_free(Str* str);
 
 StringView StringView_from(cstr chars, usize length);
 
+typedef struct Arena Arena;
+
+/// Procedures that optionally use arenas and can potentionally
+/// grow and or shrink the allocated data's size,
+/// will assume that it's the last allocated item unless documented otherwise.
+typedef struct {
+   Arena* arena;
+} OptArena;
+
 /// Allocates a new [heap] allocated [String]
 /// [Panics] on allocation failure.
-String String_new();
+#define String_new(...) \
+   String_new_ex((OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+String String_new_ex(OptArena opt);
 
-String String_with_capacity(usize capacity);
+#define String_with_capacity(capacity, ...) \
+   String_with_capacity_ex(capacity, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+String String_with_capacity_ex(usize capacity, OptArena opt);
 
 static inline String String_dummy() { return (String) {0}; }
 
 /// Creates a new [heap] allocated [String] from a [cstr].
 /// [Panics] on allocation failure.
 /// [str] may be null.
-String String_from(const cstr str);
+#define String_from(str, ...) \
+   String_from_ex(str, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+String String_from_ex(const cstr str, OptArena opt);
 
 /// Deep copies [original].
 /// [panics] on allocation failure.
 /// [self]'s capacity is that of its length, not of the [original]'s capacity.
-String String_clone(String original);
+#define String_clone(original, ...) \
+   String_clone_ex(original, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+String String_clone_ex(String original, OptArena opt);
 
 /// Frees a [String's heap allocation] from memory.
-void String_free(nullable String* self);
+#define String_free(self, ...) \
+  String_free_ex(self, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+void String_free_ex(nullable String* self, OptArena opt);
 
 /// Clears a [String], preserving its [length].
 void String_clear(nullable String* self);
 
 /// Appends char [c] to a [String].
 /// [Panics] on reallocation failure.
-void String_append(String* self, char c);
+#define String_append(self, c, ...) \
+   String_append_ex(self, c, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+void String_append_ex(String* self, char c, OptArena opt);
 
 /// Appends char [c] to the back of a [String].
 /// [Panics] on reallocation failure.
-void String_append_back(String* self, char c);
+#define String_append_back(self, c, ...) \
+   String_append_back_ex(self, c, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+void String_append_back_ex(String* self, char c, OptArena opt);
 
 /// Pops the char at the top of the string and returns it.
 /// The returning char may be a [null byte]
 /// when there is nothing left to pop or when [self] is [null].
-char String_pop(nullable String* self);
+#define String_pop(self, ...) \
+   String_pop_ex(self, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+char String_pop_ex(nullable String* self, OptArena opt);
 
 /// Appends cstr [other] to String [self] through a [copy] operation.
 /// [Panics] on reallocation failure.
 /// The memory region of [self] and [other] may overlap.
-void String_append_cstr(String* self, nullable cstr other);
+#define String_append_cstr(self, other, ...) \
+   String_append_cstr_ex(self, other, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+void String_append_cstr_ex(String* self, nullable cstr other, OptArena opt);
 
 /// Appends cstr [other] to String [self] through a [copy] operation.
 /// [Panics] on reallocation failure.
 /// The memory region of [self] and [other] may overlap.
 void String_appendf(String* self, const cstr format, ...);
+void String_appendf_arena(nullable Arena* arena, String* self, const cstr format, ...);
 
 /// Same as [String_appendf] except that this version takes in the
 /// va_list instead of creating it itself.
-void String_appendfv(String* self, const cstr format, va_list args);
-
-/// Appends String [other] to String [self] through a [copy] operation.
-/// [Panics] on reallocation failure.
-/// The memory region of both Strings may overlap.
-/// e.g by appending a String to itself
-void String_append_String(String* self, nullable String* other);
+#define String_appendfv(self, format, args, ...) \
+   String_appendfv_ex(self, format, args, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+void String_appendfv_ex(String* self, const cstr format, va_list args, OptArena opt);
 
