@@ -59,7 +59,7 @@ Arena Arena_new_ex(usize capacity, ArenaSettings settings) {
    return self;
 }
 
-void Arena_destroy(nullable Arena* self) {
+void Arena_delete(nullable Arena* self) {
    if (self == nullptr) return;
 
    munmap(self->buffer, self->capacity);

@@ -63,9 +63,11 @@ StringView StringView_from(cstr chars, usize length) {
    };
 }
 
-String String_new() {
+String String_new_ex(OptArena opt) {
    String string = {
-      .chars = mcu_malloc(17),
+      .chars = opt.arena == nullptr
+         ? mcu_malloc(17)
+         : Arena_alloc(opt.arena, 17),
       .length = 0,
       .capacity = 16
    };
@@ -74,11 +76,13 @@ String String_new() {
    return string;
 }
 
-String String_with_capacity(usize capacity) {
+String String_with_capacity_ex(usize capacity, OptArena opt) {
    mcu_assert(capacity > 0, "Can't create a String with a capacity of 0");
 
    String string = {
-      .chars = mcu_malloc(capacity + 1),
+      .chars = opt.arena == nullptr
+         ? mcu_malloc(capacity + 1)
+         : Arena_alloc(opt.arena, capacity + 1),
       .length = 0,
       .capacity = capacity
    };
@@ -88,12 +92,14 @@ String String_with_capacity(usize capacity) {
    return string;
 }
 
-String String_from(const cstr str) {
+String String_from_ex(const cstr str, OptArena opt) {
    mcu_assert(str != nullptr, "Can't create a String from null");
 
    usize str_length = strlen(str);
    String string = {
-      .chars = mcu_malloc(str_length + 1),
+      .chars = opt.arena == nullptr
+         ? mcu_malloc(str_length + 1)
+         : Arena_alloc(opt.arena, str_length + 1),
       .length = str_length,
       .capacity = str_length
    };
@@ -104,10 +110,12 @@ String String_from(const cstr str) {
    return string;
 }
 
-String String_clone(String original) {
+String String_clone_ex(String original, OptArena opt) {
    String self = {
       .length = original.length,
-      .chars = mcu_malloc(original.length + 1),
+      .chars = opt.arena == nullptr
+         ? mcu_malloc(original.length + 1)
+         : Arena_alloc(opt.arena, original.length + 1),
       .capacity = original.length
    };
 
@@ -117,10 +125,13 @@ String String_clone(String original) {
    return self;
 }
 
-void String_free(nullable String* self) {
+void String_free_ex(nullable String* self, OptArena opt) {
    if (self == nullptr) return;
 
-   mcu_free(self->chars);
+   if (opt.arena == nullptr)
+      mcu_free(self->chars);
+   else
+      Arena_free(opt.arena, self->capacity + 1);
    *self = (String) {0};
 }
 
@@ -131,12 +142,18 @@ void String_clear(nullable String* self) {
    self->chars[0] = '\0';
 }
 
-void String_append(String* self, char c) {
+void String_append_ex(String* self, char c, OptArena opt) {
    mcu_assert(self != nullptr, "Can't append a character to null");
 
    while (self->length >= self->capacity) {
-      self->capacity *= 2;
-      self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      if (opt.arena == nullptr) {
+         self->capacity *= 2;
+         self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      } else {
+         Arena_free(opt.arena, self->capacity + 1);
+         self->capacity *= 2;
+         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
+      }
    }
 
    self->chars[self->length] = c;
@@ -144,12 +161,18 @@ void String_append(String* self, char c) {
    self->chars[self->length] = '\0';
 }
 
-void String_append_back(String* self, char c) {
+void String_append_back_ex(String* self, char c, OptArena opt) {
    mcu_assert(self != nullptr, "Can't append a character to null");
 
    while (self->length >= self->capacity) {
-      self->capacity *= 2;
-      self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      if (opt.arena == nullptr) {
+         self->capacity *= 2;
+         self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      } else {
+         Arena_free(opt.arena, self->capacity + 1);
+         self->capacity *= 2;
+         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
+      }
    }
 
    for (isize i = self->length - 1; i >= 0; --i) {
@@ -163,13 +186,19 @@ void String_append_back(String* self, char c) {
    return;
 }
 
-char String_pop(nullable String* self) {
+char String_pop_ex(nullable String* self, OptArena opt) {
    if (self == nullptr)   return '\0';
    if (self->length == 0) return '\0';
 
    if (self->length >= self->capacity / 2 && self->capacity > 16) {
-      self->capacity /= 2;
-      self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      if (opt.arena == nullptr) {
+         self->capacity /= 2;
+         self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      } else {
+         Arena_free(opt.arena, self->capacity + 1);
+         self->capacity /= 2;
+         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
+      }
    }
 
    self->length -= 1;
@@ -179,7 +208,7 @@ char String_pop(nullable String* self) {
    return c;
 }
 
-void String_append_cstr(String* self, nullable cstr other) {
+void String_append_cstr_ex(String* self, nullable cstr other, OptArena opt) {
    mcu_assert(self != nullptr, "Can't append to null");
 
    if (other == nullptr) return;
@@ -187,8 +216,14 @@ void String_append_cstr(String* self, nullable cstr other) {
    usize other_length = strlen(other);
 
    while (self->length + other_length >= self->capacity) {
-      self->capacity *= 2;
-      self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      if (opt.arena == nullptr) {
+         self->capacity *= 2;
+         self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      } else {
+         Arena_free(opt.arena, self->capacity + 1);
+         self->capacity *= 2;
+         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
+      }
    }
 
    memmove(self->chars + self->length, other, other_length);
@@ -221,7 +256,38 @@ void String_appendf(String* self, const cstr format, ...) {
    va_end(args);
 }
 
-void String_appendfv(String* self, const cstr format, va_list args) {
+void String_appendf_arena(nullable Arena* arena, String* self, const cstr format, ...) {
+   mcu_assert(self != nullptr, "Can't append to null");
+   mcu_assert(format != nullptr, "Can't append a format of null to String");
+
+   va_list args;
+   va_start(args, format);
+
+   cstr tmp_str = nullptr;
+   vasprintf(&tmp_str, format, args);
+   usize other_length = strlen(tmp_str);
+
+   while (self->length + other_length >= self->capacity) {
+      if (arena == nullptr) {
+         self->capacity *= 2;
+         self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      } else {
+         Arena_free(arena, self->capacity + 1);
+         self->capacity *= 2;
+         self->chars = Arena_alloc(arena, self->capacity + 1);
+      }
+   }
+
+   memmove(self->chars + self->length, tmp_str, other_length);
+   self->length += other_length;
+   self->chars[self->length] = '\0';
+
+   free(tmp_str);
+
+   va_end(args);
+}
+
+void String_appendfv_ex(String* self, const cstr format, va_list args, OptArena opt) {
    mcu_assert(self != nullptr, "Can't append to null");
    mcu_assert(format != nullptr, "Can't append a format of null to String");
 
@@ -230,8 +296,14 @@ void String_appendfv(String* self, const cstr format, va_list args) {
    usize other_length = strlen(tmp_str);
 
    while (self->length + other_length >= self->capacity) {
-      self->capacity *= 2;
-      self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      if (opt.arena == nullptr) {
+         self->capacity *= 2;
+         self->chars = mcu_realloc(self->chars, self->capacity + 1);
+      } else {
+         Arena_free(opt.arena, self->capacity + 1);
+         self->capacity *= 2;
+         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
+      }
    }
 
    memmove(self->chars + self->length, tmp_str, other_length);
@@ -239,20 +311,5 @@ void String_appendfv(String* self, const cstr format, va_list args) {
    self->chars[self->length] = '\0';
 
    free(tmp_str);
-}
-
-void String_append_String(String* self, nullable String* other) {
-   mcu_assert(self != nullptr, "Can't append to null");
-
-   if (other == nullptr) return;
-
-   while (self->length + other->length >= self->capacity) {
-      self->capacity *= 2;
-      self->chars = mcu_realloc(self->chars, self->capacity + 1);
-   }
-
-   memmove(self->chars + self->length, other->chars, other->length);
-   self->length += other->length;
-   self->chars[self->length] = '\0';
 }
 
