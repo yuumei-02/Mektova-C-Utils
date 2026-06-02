@@ -26,32 +26,6 @@ typedef ptrdiff_t isize;
 #define ncstreq(str) if (strcmp(match, str) == 0)
 #define cstreq(str) else ncstreq(str)
 
-#define Option_decl(T) \
-   typedef struct Option_##T { \
-      union { \
-         u8 none; \
-         T some; \
-      }; \
-      bool is_some; \
-   } Option_##T
-
-#define Result_decl(T, E) \
-   typedef struct Result_##T##_##E { \
-      union { \
-         T ok; \
-         E err; \
-      }; \
-      bool is_err; \
-   } Result_##T##_##E
-
-#define Option(T) Option_##T
-#define None(T) (Option_##T) { .none = 0, .is_some = false }
-#define Some(T, v) (Option_##T) { .some = v, .is_some = true }
-
-#define Result(T, E) Result_##T##_##E
-#define Ok(T, E, v) (Result_##T##_##E) { .ok = v, .is_err = false }
-#define Err(T, E, v) (Result_##T##_##E) { .err = v, .is_err = true }
-
 typedef struct String {
    cstr chars;
    usize length;
@@ -62,16 +36,6 @@ typedef struct StringView {
    cstr chars;
    usize length;
 } StringView;
-
-typedef struct Str {
-   cstr chars;
-   usize length;
-} Str;
-
-Str Str_new(usize length);
-Str Str_from(cstr chars, usize length);
-Str Str_copy_from(cstr chars, usize length);
-void Str_free(Str* str);
 
 StringView StringView_from(cstr chars, usize length);
 

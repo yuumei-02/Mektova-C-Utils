@@ -9,50 +9,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-Str Str_new(usize length) {
-   mcu_assert(length > 0, "Can't create a StringView with a length of 0");
-
-   Str self = {
-      .chars = mcu_malloc(length + 1),
-      .length = length
-   };
-
-   self.chars[self.length] = '\0';
-   return self;
-}
-
-Str Str_from(cstr chars, usize length) {
-   mcu_assert(chars != nullptr, "Can't create a StringView from a null cstr");
-   mcu_assert(length > 0, "Can't create a StringView with a length of 0");
-
-   return (Str) {
-      .chars = chars,
-      .length = length
-   };
-}
-
-Str Str_copy_from(cstr chars, usize length) {
-   mcu_assert(chars != nullptr, "Can't create a StringView from a null cstr");
-   mcu_assert(length > 0, "Can't create a StringView with a length of 0");
-
-   Str self = {
-      .chars = mcu_malloc(length + 1),
-      .length = length
-   };
-
-   memcpy(self.chars, chars, length);
-   self.chars[self.length] = '\0';
-
-   return self;
-}
-
-void Str_free(Str* str) {
-   mcu_assert(str != nullptr, "Cannot free a null Str");
-
-   mcu_free(str->chars);
-   *str = (Str) {0};
-}
-
 StringView StringView_from(cstr chars, usize length) {
    mcu_assert(chars != nullptr, "Can't create a StringView from a null cstr");
    mcu_assert(length > 0, "Can't create a StringView with a length of 0");
