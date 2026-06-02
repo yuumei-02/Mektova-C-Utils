@@ -9,14 +9,106 @@
 #include <string.h>
 #include <stdlib.h>
 
-StringView StringView_from(cstr chars, usize length) {
-   mcu_assert(chars != nullptr, "Can't create a StringView from a null cstr");
-   mcu_assert(length > 0, "Can't create a StringView with a length of 0");
+StringView StringView_from(nullable cstr chars, usize length) {
+   if (chars == nullptr || length == 0) {
+      return (StringView) {0};
+   }
 
    return (StringView) {
       .chars = chars,
       .length = length
    };
+}
+
+StringView SV_chop_left(StringView* self, usize n) {
+   mcu_assert(self != nullptr, "self can't be null");
+
+   StringView new = *self;
+
+   if (n >= self->length) {
+      *self = (StringView) {0};
+      return new;
+   }
+
+   self->chars += n;
+   self->length -= n;
+   new.length = n;
+   return new;
+}
+
+StringView SV_chop_right(StringView* self, usize n) {
+   mcu_assert(self != nullptr, "self can't be null");
+
+   StringView new = *self;
+
+   if (n >= self->length) {
+      *self = (StringView) {0};
+      return new;
+   }
+
+   self->length -= n;
+   new.chars += self->length;
+   new.length = n;
+   return new;
+}
+
+StringView SV_chop_left_by_delimiter(StringView* self, char delimiter) {
+   mcu_assert(self != nullptr, "self can't be null");
+
+   StringView new = *self;
+   usize chopped = 0;
+
+   for (; chopped < self->length && self->chars[chopped] != delimiter; ++chopped) {}
+
+   self->chars += chopped;
+   self->length -= chopped;
+   new.length = chopped;
+
+   if (self->length == 0) {
+      *self = (StringView) {0};
+      return new;
+   }
+
+   // Chop the delimiter
+   self->chars++;
+   self->length--;
+
+   if (self->length == 0) {
+      *self = (StringView) {0};
+      return new;
+   }
+
+   return new;
+}
+
+StringView SV_chop_right_by_delimiter(StringView* self, char delimiter) {
+   mcu_assert(self != nullptr, "self can't be null");
+
+   StringView new = *self;
+   usize chopped = 0;
+
+   while (self->length > 0 && self->chars[self->length - 1] != delimiter) {
+      self->length--;
+      chopped++;
+   }
+
+   new.chars += new.length - chopped;
+   new.length = chopped;
+
+   if (self->length == 0) {
+      *self = (StringView) {0};
+      return new;
+   }
+
+   // Chop the delimiter
+   self->length--;
+
+   if (self->length == 0) {
+      *self = (StringView) {0};
+      return new;
+   }
+
+   return new;
 }
 
 String String_new_ex(OptArena opt) {

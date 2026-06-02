@@ -37,7 +37,29 @@ typedef struct StringView {
    usize length;
 } StringView;
 
-StringView StringView_from(cstr chars, usize length);
+StringView StringView_from(nullable cstr chars, usize length);
+
+/// Chops [self] from the left [n] amount of times.
+/// Returns a new [StringView] containing what got chopped and modifies [self]
+/// to be the remainder.
+/// [n] can be out of bounds.
+StringView SV_chop_left(StringView* self, usize n);
+
+/// Chops [self] from the right [n] amount of times.
+/// Returns a new [StringView] containing what got chopped and modifies [self]
+/// to be the remainder.
+/// [n] can be out of bounds.
+StringView SV_chop_right(StringView* self, usize n);
+
+/// Chops [self] from the left untill and including the delimiter.
+/// Returns a new [StringView] containing what got chopped and modifies [self]
+/// to be the remainder.
+StringView SV_chop_left_by_delimiter(StringView* self, char delimiter);
+
+/// Chops [self] from the right untill and including the delimiter.
+/// Returns a new [StringView] containing what got chopped and modifies [self]
+/// to be the remainder.
+StringView SV_chop_right_by_delimiter(StringView* self, char delimiter);
 
 typedef struct Arena Arena;
 
