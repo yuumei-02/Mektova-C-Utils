@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: mcu install
+.PHONY: mcu install test setup
 
 mcu: setup
 	cd mcu
@@ -8,6 +8,10 @@ mcu: setup
 install: setup
 	cd mcu
 	make install
+
+test: install
+	cd test
+	make test
 
 setup:
 	mkdir -p build/bin
