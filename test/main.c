@@ -168,8 +168,62 @@ TestResult Test_UString32_from(TestResult previous) {
    return TR_Pass;
 }
 
+TestResult Test_UString32_append(TestResult previous) {
+   if (previous != TR_Pass)
+      return TR_Skip;
+
+   UString32 msg1 = UString32_from(U"привет Yuumei");
+   UString32 msg2 = UString32_from(U"привет Yuumei", .arena = &scratch_arena);
+
+   for (usize i = 0; i < 8; ++i) {
+      UString32_append(&msg1, U'п');
+      UString32_append(&msg2, U'п', .arena = &scratch_arena);
+   }
+
+   if (!ustr32_cmp(msg1.chars, U"привет Yuumeiпппппппп")) return TR_Fail;
+   if (!ustr32_cmp(msg1.chars, msg2.chars)) return TR_Fail;
+
+   UString32_append_ustr32(&msg1, U"привет");
+   UString32_append_ustr32(&msg2, U"привет", .arena = &scratch_arena);
+
+   if (!ustr32_cmp(msg1.chars, U"привет Yuumeiпппппппппривет")) return TR_Fail;
+   if (!ustr32_cmp(msg1.chars, msg2.chars)) return TR_Fail;
+
+   UString32_delete(&msg1);
+   UString32_delete(&msg2, .arena = &scratch_arena);
+
+   return TR_Pass;
+}
+
+TestResult Test_UString32_remove(TestResult previous) {
+   if (previous != TR_Pass)
+      return TR_Skip;
+
+   UString32 msg1 = UString32_from(U"привет Yuumei");
+   UString32 msg2 = UString32_from(U"привет Yuumei", .arena = &scratch_arena);
+
+   u32 popped = UString32_pop(&msg1);
+   if (popped != U'i') return TR_Fail;
+   popped = UString32_pop(&msg2, .arena = &scratch_arena);
+   if (popped != U'i') return TR_Fail;
+
+   popped = UString32_remove(&msg1, 1);
+   // @note: This is the cyrillic R, not the ascii one.
+   if (popped != U'р') return TR_Fail;
+   popped = UString32_remove(&msg2, 1, .arena = &scratch_arena);
+   if (popped != U'р') return TR_Fail;
+   
+   if (!ustr32_cmp(msg1.chars, U"пивет Yuume")) return TR_Fail;
+   if (!ustr32_cmp(msg1.chars, msg2.chars)) return TR_Fail;
+
+   UString32_delete(&msg1);
+   UString32_delete(&msg2, .arena = &scratch_arena);
+
+   return TR_Pass;
+}
+
 i32 main() {
-   scratch_arena = Arena_new(KiB*4, .protection = MP_Read | MP_Write);
+   scratch_arena = Arena_new(MiB, .protection = MP_Read | MP_Write);
 
    Vtest_start(40);
    run_test_ex(&Test_StringView_chop_left, "SV_chop_left", TR_Unknown);
@@ -184,7 +238,10 @@ i32 main() {
    if (previous != TR_Pass)
       run_from = previous;
 
-   run_test_ex(&Test_UString32_from, "UString32_from", run_from);
+   previous = run_test_ex(&Test_UString32_from, "UString32_from", run_from);
+   run_test_ex(&Test_UString32_append, "UString32_append", previous);
+   run_test_ex(&Test_UString32_remove, "UString32_remove", previous);
+   
    Vtest_end();
 
    Arena_delete(&scratch_arena);
