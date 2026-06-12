@@ -108,6 +108,29 @@ void Vector_remove(Vector* self, usize index) {
    }
 }
 
+void Vector_unordered_remove(Vector* self, usize index) {
+   mcu_assert(self != nullptr, "self can't be null");
+
+   if (index >= self->length)
+      return;
+
+   if (index == self->length - 1) {
+      Vector_pop(self);
+      return;
+   }
+
+   u8* tmp_buffer = mcu_malloc(self->T_size);
+   u8* base = ((u8*) self->buffer) + (index * self->T_size);
+   u8* head = ((u8*) self->buffer) + ((self->length - 1) * self->T_size);
+   
+   memcpy(tmp_buffer, base, self->T_size);
+   memcpy(base, head, self->T_size);
+   memcpy(head, tmp_buffer, self->T_size);
+
+   mcu_free(tmp_buffer);
+   Vector_pop(self);
+}
+
 void Vector_free(nullable Vector* self) {
    if (self == nullptr) return;
 

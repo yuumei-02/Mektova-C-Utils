@@ -19,6 +19,7 @@ void Vector_push(Vector* self, void* data);
 void* Vector_pop(Vector* self);
 void* Vector_get(Vector* self, usize index);
 void Vector_remove(Vector* self, usize index);
+void Vector_unordered_remove(Vector* self, usize index);
 
 #define Vector_push_create(vector, data) \
    do { \

@@ -222,6 +222,24 @@ TestResult Test_UString32_remove(TestResult previous) {
    return TR_Pass;
 }
 
+TestResult Test_unordered_vector(TestResult previous) {
+   unused previous;
+
+   Vector vec = Vector_new(sizeof(usize));
+
+   for (usize i = 0; i < 10; ++i)
+      Vector_push(&vec, &i);
+
+   Vector_unordered_remove(&vec, 2);
+   if (*(usize*) Vector_get(&vec, 2) != 9)
+      return TR_Fail;
+
+   if (vec.length != 9)
+      return TR_Fail;
+
+   return TR_Pass;
+}
+
 i32 main() {
    scratch_arena = Arena_new(MiB, .protection = MP_Read | MP_Write);
 
@@ -241,6 +259,8 @@ i32 main() {
    previous = run_test_ex(&Test_UString32_from, "UString32_from", run_from);
    run_test_ex(&Test_UString32_append, "UString32_append", previous);
    run_test_ex(&Test_UString32_remove, "UString32_remove", previous);
+
+   run_test_ex(&Test_unordered_vector, "Unordered vector", TR_Unknown);
    
    Vtest_end();
 
