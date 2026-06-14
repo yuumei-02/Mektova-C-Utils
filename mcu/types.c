@@ -157,7 +157,7 @@ void String_append_sv_ex(String* self, StringView sv, OptArena opt) {
       }
    }
 
-   void* base = self->chars + self->length;
+   void* base = self->chars + (self->length - sv.length);
    memcpy(base, sv.chars, sv.length);
    self->chars[self->length] = '\0';
 }
