@@ -82,6 +82,11 @@ String String_with_capacity_ex(usize capacity, OptArena opt);
 
 static inline String String_dummy() { return (String) {0}; }
 
+#define String_append_sv(self, sv, ...) \
+   String_append_sv_ex(self, sv, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+
+void String_append_sv_ex(String* self, StringView sv, OptArena opt);
+
 /// Creates a new [heap] allocated [String] from a [cstr].
 /// [Panics] on allocation failure.
 /// [str] may be null.
