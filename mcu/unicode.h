@@ -3,12 +3,20 @@
 #include "types.h"
 
 typedef u32* ustr32;
+typedef u8* ustr8;
+
+typedef u32 uchar32;
+typedef u8 uchar8;
 
 typedef struct {
    ustr32 chars;
    usize length;
    usize capacity;
 } UString32;
+
+/// Returns the amount of bytes written to [buff].
+/// [0] bytes written means that [c] holds an invalid codepoint.
+u32 uchar32_to_uchar8(uchar32 c, uchar8 buff[4]);
 
 usize ustr32_len(ustr32 chars);
 /// Returns a [boolean] where [true] means the strings are equal.

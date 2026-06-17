@@ -2,6 +2,35 @@
 #include "memory.h"
 #include "unicode.h"
 
+u32 uchar32_to_uchar8(uchar32 c, uchar8 buff[4]) {
+   if (c > 0x10ffff || (c >= 0xd800 && c <= 0xdfff))
+      return 0;
+
+   if (c <= 0x7f) {
+      buff[0] = (u8) c;
+      return 1;
+   }
+
+   if (c <= 0x7ff) {
+      buff[0] = (u8) (0xc0 | (c >> 6));
+      buff[1] = (u8) (0x80 | (c & 0x3f));
+      return 2;
+   }
+
+   if (c <= 0xffff) {
+      buff[0] = (u8) (0xe0 | (c >> 12));
+      buff[1] = (u8) (0x80 | ((c >> 6) & 0x3f));
+      buff[2] = (u8) (0x80 | (c & 0x3f));
+      return 3;
+   }
+
+   buff[0] = (u8) (0xf0 | (c >> 18));
+   buff[1] = (u8) (0x80 | ((c >> 12) & 0x3f));
+   buff[2] = (u8) (0x80 | ((c >> 6) & 0x3f));
+   buff[3] = (u8) (0x80 | (c & 0x3f));
+   return 4;
+}
+
 bool ustr32_cmp(ustr32 left, ustr32 right) {
    mcu_assert(left != nullptr, "left can't be null");
    mcu_assert(right != nullptr, "right can't be null");
