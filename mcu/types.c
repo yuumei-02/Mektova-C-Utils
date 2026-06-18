@@ -140,6 +140,23 @@ String String_with_capacity_ex(usize capacity, OptArena opt) {
    return string;
 }
 
+String String_from_sv_ex(StringView sv, OptArena opt) {
+   if (sv.chars == nullptr || sv.length < 1)
+      return String_new_ex(opt);
+
+   String self = {
+      .chars = opt.arena == nullptr
+         ? mcu_malloc(sv.length + 1)
+         : Arena_alloc(opt.arena, sv.length + 1),
+      .length = sv.length,
+      .capacity = sv.length
+   };
+
+   memcpy(self.chars, sv.chars, sv.length);
+   self.chars[self.capacity] = '\0';
+   return self;
+}
+
 void String_append_sv_ex(String* self, StringView sv, OptArena opt) {
    mcu_assert(self != nullptr, "self can't be null");
 

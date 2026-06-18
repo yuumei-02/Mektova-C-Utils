@@ -80,6 +80,11 @@ String String_new_ex(OptArena opt);
    String_with_capacity_ex(capacity, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
 String String_with_capacity_ex(usize capacity, OptArena opt);
 
+#define String_from_sv(sv, ...) \
+   String_from_sv_ex(sv, (OptArena) { .arena = nullptr __VA_OPT__(,) __VA_ARGS__ })
+
+String String_from_sv_ex(StringView sv, OptArena opt);
+
 static inline String String_dummy() { return (String) {0}; }
 
 #define String_append_sv(self, sv, ...) \
