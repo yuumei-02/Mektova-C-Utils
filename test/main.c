@@ -4,8 +4,6 @@
 #include <mcu/unicode.h>
 #include <mcu/memory.h>
 
-#include <serena.h>
-
 bool test_sv_equals(StringView left, StringView right) {
    if (left.length != right.length) return false;
 
