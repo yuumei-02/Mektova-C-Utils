@@ -61,15 +61,6 @@ StringView SV_chop_left_by_delimiter(StringView* self, char delimiter);
 /// to be the remainder.
 StringView SV_chop_right_by_delimiter(StringView* self, char delimiter);
 
-typedef struct Arena Arena;
-
-/// Procedures that optionally use arenas and can potentionally
-/// grow and or shrink the allocated data's size,
-/// will assume that it's the last allocated item unless documented otherwise.
-typedef struct {
-   Arena* arena;
-} OptArena;
-
 /// Allocates a new [heap] allocated [String]
 /// [Panics] on allocation failure.
 String String_new();
