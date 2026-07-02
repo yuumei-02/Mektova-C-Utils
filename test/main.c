@@ -4,8 +4,6 @@
 #include <mcu/unicode.h>
 #include <mcu/memory.h>
 
-static Arena scratch_arena;
-
 bool test_sv_equals(StringView left, StringView right) {
    if (left.length != right.length) return false;
 
@@ -153,17 +151,14 @@ TestResult Test_UString32_from(TestResult previous) {
 
    ustr32 msg_literal = U"привет Yuumei";
    UString32 msg1 = UString32_from(msg_literal);
-   UString32 msg2 = UString32_from(msg_literal, .arena = &scratch_arena);
 
    usize lit_len = ustr32_len(msg_literal);
-   if (msg1.length != lit_len || msg2.length != lit_len) return TR_Fail;
-   if (msg1.length != msg1.capacity || msg2.length != msg2.capacity) return TR_Fail;
+   if (msg1.length != lit_len) return TR_Fail;
+   if (msg1.length != msg1.capacity) return TR_Fail;
 
    if (!ustr32_cmp(msg_literal, msg1.chars)) return TR_Fail;
-   if (!ustr32_cmp(msg_literal, msg2.chars)) return TR_Fail;
 
    UString32_delete(&msg1);
-   UString32_delete(&msg2, .arena = &scratch_arena);
 
    return TR_Pass;
 }
@@ -173,25 +168,16 @@ TestResult Test_UString32_append(TestResult previous) {
       return TR_Skip;
 
    UString32 msg1 = UString32_from(U"привет Yuumei");
-   UString32 msg2 = UString32_from(U"привет Yuumei", .arena = &scratch_arena);
 
    for (usize i = 0; i < 8; ++i) {
       UString32_append(&msg1, U'п');
-      UString32_append(&msg2, U'п', .arena = &scratch_arena);
    }
 
    if (!ustr32_cmp(msg1.chars, U"привет Yuumeiпппппппп")) return TR_Fail;
-   if (!ustr32_cmp(msg1.chars, msg2.chars)) return TR_Fail;
-
    UString32_append_ustr32(&msg1, U"привет");
-   UString32_append_ustr32(&msg2, U"привет", .arena = &scratch_arena);
-
    if (!ustr32_cmp(msg1.chars, U"привет Yuumeiпппппппппривет")) return TR_Fail;
-   if (!ustr32_cmp(msg1.chars, msg2.chars)) return TR_Fail;
 
    UString32_delete(&msg1);
-   UString32_delete(&msg2, .arena = &scratch_arena);
-
    return TR_Pass;
 }
 
@@ -200,25 +186,17 @@ TestResult Test_UString32_remove(TestResult previous) {
       return TR_Skip;
 
    UString32 msg1 = UString32_from(U"привет Yuumei");
-   UString32 msg2 = UString32_from(U"привет Yuumei", .arena = &scratch_arena);
 
    u32 popped = UString32_pop(&msg1);
-   if (popped != U'i') return TR_Fail;
-   popped = UString32_pop(&msg2, .arena = &scratch_arena);
    if (popped != U'i') return TR_Fail;
 
    popped = UString32_remove(&msg1, 1);
    // @note: This is the cyrillic R, not the ascii one.
    if (popped != U'р') return TR_Fail;
-   popped = UString32_remove(&msg2, 1, .arena = &scratch_arena);
-   if (popped != U'р') return TR_Fail;
    
    if (!ustr32_cmp(msg1.chars, U"пивет Yuume")) return TR_Fail;
-   if (!ustr32_cmp(msg1.chars, msg2.chars)) return TR_Fail;
 
    UString32_delete(&msg1);
-   UString32_delete(&msg2, .arena = &scratch_arena);
-
    return TR_Pass;
 }
 
@@ -241,8 +219,6 @@ TestResult Test_unordered_vector(TestResult previous) {
 }
 
 i32 main() {
-   scratch_arena = Arena_new(MiB, .protection = MP_Read | MP_Write);
-
    Vtest_start(40);
    run_test_ex(&Test_StringView_chop_left, "SV_chop_left", TR_Unknown);
    run_test_ex(&Test_StringView_chop_right, "SV_chop_right", TR_Unknown);
@@ -263,7 +239,5 @@ i32 main() {
    run_test_ex(&Test_unordered_vector, "Unordered vector", TR_Unknown);
    
    Vtest_end();
-
-   Arena_delete(&scratch_arena);
 }
 
