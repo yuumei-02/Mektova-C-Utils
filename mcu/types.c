@@ -111,11 +111,9 @@ StringView SV_chop_right_by_delimiter(StringView* self, char delimiter) {
    return new;
 }
 
-String String_new_ex(OptArena opt) {
+String String_new() {
    String string = {
-      .chars = opt.arena == nullptr
-         ? mcu_malloc(17)
-         : Arena_alloc(opt.arena, 17),
+      .chars = mcu_malloc(17),
       .length = 0,
       .capacity = 16
    };
@@ -124,13 +122,11 @@ String String_new_ex(OptArena opt) {
    return string;
 }
 
-String String_with_capacity_ex(usize capacity, OptArena opt) {
+String String_with_capacity(usize capacity) {
    mcu_assert(capacity > 0, "Can't create a String with a capacity of 0");
 
    String string = {
-      .chars = opt.arena == nullptr
-         ? mcu_malloc(capacity + 1)
-         : Arena_alloc(opt.arena, capacity + 1),
+      .chars = mcu_malloc(capacity + 1),
       .length = 0,
       .capacity = capacity
    };
@@ -140,14 +136,12 @@ String String_with_capacity_ex(usize capacity, OptArena opt) {
    return string;
 }
 
-String String_from_sv_ex(StringView sv, OptArena opt) {
+String String_from_sv(StringView sv) {
    if (sv.chars == nullptr || sv.length < 1)
-      return String_new_ex(opt);
+      return String_new();
 
    String self = {
-      .chars = opt.arena == nullptr
-         ? mcu_malloc(sv.length + 1)
-         : Arena_alloc(opt.arena, sv.length + 1),
+      .chars = mcu_malloc(sv.length + 1),
       .length = sv.length,
       .capacity = sv.length
    };
@@ -157,21 +151,15 @@ String String_from_sv_ex(StringView sv, OptArena opt) {
    return self;
 }
 
-void String_append_sv_ex(String* self, StringView sv, OptArena opt) {
+void String_append_sv(String* self, StringView sv) {
    mcu_assert(self != nullptr, "self can't be null");
 
    if (sv.length < 1 || sv.chars == nullptr) return;
 
    self->length += sv.length;
    while (self->length >= self->capacity) {
-      if (opt.arena == nullptr) {
-         self->capacity *= 2;
-         self->chars = mcu_realloc(self->chars, self->capacity + 1);
-      } else {
-         Arena_free(opt.arena, self->capacity + 1);
-         self->capacity *= 2;
-         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
-      }
+      self->capacity *= 2;
+      self->chars = mcu_realloc(self->chars, self->capacity + 1);
    }
 
    void* base = self->chars + (self->length - sv.length);
@@ -179,14 +167,12 @@ void String_append_sv_ex(String* self, StringView sv, OptArena opt) {
    self->chars[self->length] = '\0';
 }
 
-String String_from_ex(const cstr str, OptArena opt) {
+String String_from(const cstr str) {
    mcu_assert(str != nullptr, "Can't create a String from null");
 
    usize str_length = strlen(str);
    String string = {
-      .chars = opt.arena == nullptr
-         ? mcu_malloc(str_length + 1)
-         : Arena_alloc(opt.arena, str_length + 1),
+      .chars = mcu_malloc(str_length + 1),
       .length = str_length,
       .capacity = str_length
    };
@@ -197,12 +183,10 @@ String String_from_ex(const cstr str, OptArena opt) {
    return string;
 }
 
-String String_clone_ex(String original, OptArena opt) {
+String String_clone(String original) {
    String self = {
       .length = original.length,
-      .chars = opt.arena == nullptr
-         ? mcu_malloc(original.length + 1)
-         : Arena_alloc(opt.arena, original.length + 1),
+      .chars = mcu_malloc(original.length + 1),
       .capacity = original.length
    };
 
@@ -212,13 +196,10 @@ String String_clone_ex(String original, OptArena opt) {
    return self;
 }
 
-void String_free_ex(nullable String* self, OptArena opt) {
+void String_free(nullable String* self) {
    if (self == nullptr) return;
 
-   if (opt.arena == nullptr)
-      mcu_free(self->chars);
-   else
-      Arena_free(opt.arena, self->capacity + 1);
+   mcu_free(self->chars);
    *self = (String) {0};
 }
 
@@ -229,18 +210,12 @@ void String_clear(nullable String* self) {
    self->chars[0] = '\0';
 }
 
-void String_append_ex(String* self, char c, OptArena opt) {
+void String_append(String* self, char c) {
    mcu_assert(self != nullptr, "Can't append a character to null");
 
    while (self->length >= self->capacity) {
-      if (opt.arena == nullptr) {
-         self->capacity *= 2;
-         self->chars = mcu_realloc(self->chars, self->capacity + 1);
-      } else {
-         Arena_free(opt.arena, self->capacity + 1);
-         self->capacity *= 2;
-         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
-      }
+      self->capacity *= 2;
+      self->chars = mcu_realloc(self->chars, self->capacity + 1);
    }
 
    self->chars[self->length] = c;
@@ -248,18 +223,12 @@ void String_append_ex(String* self, char c, OptArena opt) {
    self->chars[self->length] = '\0';
 }
 
-void String_append_back_ex(String* self, char c, OptArena opt) {
+void String_append_back(String* self, char c) {
    mcu_assert(self != nullptr, "Can't append a character to null");
 
    while (self->length >= self->capacity) {
-      if (opt.arena == nullptr) {
-         self->capacity *= 2;
-         self->chars = mcu_realloc(self->chars, self->capacity + 1);
-      } else {
-         Arena_free(opt.arena, self->capacity + 1);
-         self->capacity *= 2;
-         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
-      }
+      self->capacity *= 2;
+      self->chars = mcu_realloc(self->chars, self->capacity + 1);
    }
 
    for (isize i = self->length - 1; i >= 0; --i) {
@@ -273,19 +242,13 @@ void String_append_back_ex(String* self, char c, OptArena opt) {
    return;
 }
 
-char String_pop_ex(nullable String* self, OptArena opt) {
+char String_pop(nullable String* self) {
    if (self == nullptr)   return '\0';
    if (self->length == 0) return '\0';
 
    if (self->length >= self->capacity / 2 && self->capacity > 16) {
-      if (opt.arena == nullptr) {
-         self->capacity /= 2;
-         self->chars = mcu_realloc(self->chars, self->capacity + 1);
-      } else {
-         Arena_free(opt.arena, self->capacity + 1);
-         self->capacity /= 2;
-         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
-      }
+      self->capacity /= 2;
+      self->chars = mcu_realloc(self->chars, self->capacity + 1);
    }
 
    self->length -= 1;
@@ -295,7 +258,7 @@ char String_pop_ex(nullable String* self, OptArena opt) {
    return c;
 }
 
-void String_append_cstr_ex(String* self, nullable cstr other, OptArena opt) {
+void String_append_cstr(String* self, nullable cstr other) {
    mcu_assert(self != nullptr, "Can't append to null");
 
    if (other == nullptr) return;
@@ -303,14 +266,8 @@ void String_append_cstr_ex(String* self, nullable cstr other, OptArena opt) {
    usize other_length = strlen(other);
 
    while (self->length + other_length >= self->capacity) {
-      if (opt.arena == nullptr) {
-         self->capacity *= 2;
-         self->chars = mcu_realloc(self->chars, self->capacity + 1);
-      } else {
-         Arena_free(opt.arena, self->capacity + 1);
-         self->capacity *= 2;
-         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
-      }
+      self->capacity *= 2;
+      self->chars = mcu_realloc(self->chars, self->capacity + 1);
    }
 
    memmove(self->chars + self->length, other, other_length);
@@ -343,38 +300,7 @@ void String_appendf(String* self, const cstr format, ...) {
    va_end(args);
 }
 
-void String_appendf_arena(nullable Arena* arena, String* self, const cstr format, ...) {
-   mcu_assert(self != nullptr, "Can't append to null");
-   mcu_assert(format != nullptr, "Can't append a format of null to String");
-
-   va_list args;
-   va_start(args, format);
-
-   cstr tmp_str = nullptr;
-   vasprintf(&tmp_str, format, args);
-   usize other_length = strlen(tmp_str);
-
-   while (self->length + other_length >= self->capacity) {
-      if (arena == nullptr) {
-         self->capacity *= 2;
-         self->chars = mcu_realloc(self->chars, self->capacity + 1);
-      } else {
-         Arena_free(arena, self->capacity + 1);
-         self->capacity *= 2;
-         self->chars = Arena_alloc(arena, self->capacity + 1);
-      }
-   }
-
-   memmove(self->chars + self->length, tmp_str, other_length);
-   self->length += other_length;
-   self->chars[self->length] = '\0';
-
-   free(tmp_str);
-
-   va_end(args);
-}
-
-void String_appendfv_ex(String* self, const cstr format, va_list args, OptArena opt) {
+void String_appendfv(String* self, const cstr format, va_list args) {
    mcu_assert(self != nullptr, "Can't append to null");
    mcu_assert(format != nullptr, "Can't append a format of null to String");
 
@@ -383,14 +309,8 @@ void String_appendfv_ex(String* self, const cstr format, va_list args, OptArena 
    usize other_length = strlen(tmp_str);
 
    while (self->length + other_length >= self->capacity) {
-      if (opt.arena == nullptr) {
-         self->capacity *= 2;
-         self->chars = mcu_realloc(self->chars, self->capacity + 1);
-      } else {
-         Arena_free(opt.arena, self->capacity + 1);
-         self->capacity *= 2;
-         self->chars = Arena_alloc(opt.arena, self->capacity + 1);
-      }
+      self->capacity *= 2;
+      self->chars = mcu_realloc(self->chars, self->capacity + 1);
    }
 
    memmove(self->chars + self->length, tmp_str, other_length);

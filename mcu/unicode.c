@@ -60,11 +60,9 @@ usize ustr32_len(ustr32 chars) {
    return length;
 }
 
-UString32 UString32_new_impl(OptArena opt) {
+UString32 UString32_new() {
    UString32 self = {
-      .chars = opt.arena == nullptr
-         ? mcu_malloc(17 * sizeof(u32))
-         : Arena_alloc(opt.arena, 17 * sizeof(u32)),
+      .chars = mcu_malloc(17 * sizeof(u32)),
       .length = 0,
       .capacity = 16
    };
@@ -73,15 +71,13 @@ UString32 UString32_new_impl(OptArena opt) {
    return self;
 }
 
-UString32 UString32_from_impl(nullable ustr32 chars, OptArena opt) {
+UString32 UString32_from(nullable ustr32 chars) {
    if (chars == nullptr)
-      return UString32_new_impl(opt);
+      return UString32_new();
 
    usize char_len = ustr32_len(chars);
    UString32 self = {
-      .chars = opt.arena == nullptr
-         ? mcu_malloc((char_len + 1) * sizeof(u32))
-         : Arena_alloc(opt.arena, (char_len + 1) * sizeof(u32)),
+      .chars = mcu_malloc((char_len + 1) * sizeof(u32)),
       .length = char_len,
       .capacity = char_len
    };
@@ -90,30 +86,18 @@ UString32 UString32_from_impl(nullable ustr32 chars, OptArena opt) {
    return self;
 }
 
-void UString32_delete_impl(nullable UString32* self, OptArena opt) {
-   if (self == nullptr)
-      return;
+void UString32_delete(nullable UString32* self) {
+   if (self == nullptr) return;
 
-   if (opt.arena == nullptr)
-      mcu_free(self->chars);
-   else
-      Arena_free(opt.arena, self->capacity);
-
+   mcu_free(self->chars);
    *self = (UString32) {0};
 }
 
 [[gnu::always_inline]]
-static inline void UString32_check_grow(UString32* self, OptArena opt) {
+static inline void UString32_check_grow(UString32* self) {
    while (self->length > self->capacity) {
-      if (opt.arena == nullptr) {
-         self->capacity *= 2;
-         self->chars = mcu_realloc(self->chars, (self->capacity + 1) * sizeof(u32));
-      } else {
-         Arena_free(opt.arena, (self->capacity + 1) * sizeof(u32));
-         self->capacity *= 2;
-         self->chars = Arena_alloc(opt.arena, (self->capacity + 1) * sizeof(u32));
-      }
-
+      self->capacity *= 2;
+      self->chars = mcu_realloc(self->chars, (self->capacity + 1) * sizeof(u32));
       self->chars[self->capacity] = '\0';
    }
 
@@ -121,53 +105,46 @@ static inline void UString32_check_grow(UString32* self, OptArena opt) {
 }
 
 [[gnu::always_inline]]
-static inline void UString32_check_shrink(UString32* self, OptArena opt) {
+static inline void UString32_check_shrink(UString32* self) {
    while (self->capacity > 16 && self->length < self->capacity / 2) {
-      if (opt.arena == nullptr) {
-         self->capacity /= 2;
-         self->chars = mcu_realloc(self->chars, (self->capacity + 1) * sizeof(u32));
-      } else {
-         Arena_free(opt.arena, (self->capacity + 1) * sizeof(u32));
-         self->capacity /= 2;
-         self->chars = Arena_alloc(opt.arena, (self->capacity + 1) * sizeof(u32));
-      }
-
+      self->capacity /= 2;
+      self->chars = mcu_realloc(self->chars, (self->capacity + 1) * sizeof(u32));
       self->chars[self->capacity] = '\0';
    }
 
    self->chars[self->length] = '\0';
 }
 
-void UString32_append_impl(UString32* self, u32 c, OptArena opt) {
+void UString32_append(UString32* self, u32 c) {
    mcu_assert(self != nullptr, "self can't be null");
 
    self->length++;
-   UString32_check_grow(self, opt);
+   UString32_check_grow(self);
    self->chars[self->length - 1] = c;
 }
 
-void UString32_append_ustr32_impl(UString32* self, ustr32 str, OptArena opt) {
+void UString32_append_ustr32(UString32* self, ustr32 str) {
    mcu_assert(self != nullptr, "self can't be null");
    mcu_assert(str != nullptr, "str can't be null");
 
    usize str_len = ustr32_len(str);
    self->length += str_len;
-   UString32_check_grow(self, opt);
+   UString32_check_grow(self);
    memcpy(self->chars + (self->length - str_len), str, (str_len + 1) * sizeof(u32));
 }
 
-u32 UString32_pop_impl(UString32* self, OptArena opt) {
+u32 UString32_pop(UString32* self) {
    mcu_assert(self != nullptr, "self can't be null");
 
    if (self->length == 0)
       return null;
 
    u32 c = self->chars[--self->length];
-   UString32_check_shrink(self, opt);
+   UString32_check_shrink(self);
    return c;
 }
 
-u32 UString32_remove_impl(UString32* self, usize index, OptArena opt) {
+u32 UString32_remove(UString32* self, usize index) {
    mcu_assert(self != nullptr, "self can't be null");
 
    if (self->length == 0 || index >= self->length)
@@ -175,7 +152,7 @@ u32 UString32_remove_impl(UString32* self, usize index, OptArena opt) {
 
    u32 c = self->chars[index];
    memmove(self->chars + index, self->chars + index + 1, (self->length - index) * sizeof(u32));
-   UString32_check_shrink(self, opt);
+   UString32_check_shrink(self);
    return c;
 }
 
