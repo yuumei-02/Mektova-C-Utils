@@ -1,7 +1,9 @@
 #pragma once
 
 #include "types.h"
-#include "keywords.h"
+
+#define loop while(true)
+#define unused (void)
 
 [[noreturn]]
 void panic_handler(cstr file, i32 line, const cstr func, cstr format, ...);
