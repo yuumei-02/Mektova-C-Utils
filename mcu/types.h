@@ -37,6 +37,13 @@ typedef struct StringView {
    usize length;
 } StringView;
 
+// Temporarly swap the first byte after the end of the [self] with [null].
+// Returns the swapped out byte for restoring later.
+char StringView_tmp_nullify(StringView self);
+
+// Restores a nulled StringView ([self]) to it's original state.
+void StringView_tmp_restore(StringView self, char tmp);
+
 StringView StringView_from(nullable cstr chars, usize length);
 
 /// Chops [self] from the left [n] amount of times.

@@ -4,6 +4,9 @@
 
 #define loop while(true)
 #define unused (void)
+#define internal static
+
+extern const u32 mcu_version;
 
 [[noreturn]]
 void panic_handler(cstr file, i32 line, const cstr func, cstr format, ...);

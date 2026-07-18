@@ -9,6 +9,19 @@
 #include <string.h>
 #include <stdlib.h>
 
+// major|minor|patch|pad
+const u32 mcu_version = 0x01'00'00'00;
+
+inline char StringView_tmp_nullify(StringView self) {
+   char tmp = self.chars[self.length];
+   self.chars[self.length] = '\0';
+   return tmp;
+}
+
+inline void StringView_tmp_restore(StringView self, char tmp) {
+   self.chars[self.length] = tmp;
+}
+
 StringView StringView_from(nullable cstr chars, usize length) {
    if (chars == nullptr || length == 0) {
       return (StringView) {0};
