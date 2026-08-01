@@ -5,6 +5,8 @@
 #define loop while(true)
 #define unused (void)
 #define internal static
+#define scope(...)
+#define non_null_assert(value) mcu_assert(value != nullptr, #value " can't be null")
 
 extern const u32 mcu_version;
 
